@@ -190,15 +190,65 @@ class CommandPalette {
         }
 
         const q = query.toLowerCase();
+        
+        // Local results
         this.categories = {
             apps: this.fuzzySearch(this.apps, q),
             files: [], // Would integrate with file system
             commands: this.fuzzySearch(this.commands, q),
-            web: [{ id: 'web-search', name: `Search "${query}" on web`, icon: '🌐', category: 'web', url: `https://google.com/search?q=${encodeURIComponent(query)}` }],
+            web: [], // Will be populated by real search
             calculator: this.calculate(q)
         };
 
+        // Fetch real web results
+        this.fetchRealSearchResults(query);
+
         this.renderResults();
+    }
+
+    async fetchRealSearchResults(query) {
+        // Use DuckDuckGo Instant Answer API for real results
+        try {
+            // Get search suggestions / instant answers
+            const response = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`);
+            const data = await response.json();
+            
+            if (data && data.RelatedTopics) {
+                const webResults = data.RelatedTopics.slice(0, 8).map((item, i) => ({
+                    id: `web-${i}`,
+                    name: item.Text || item.Name || 'Result',
+                    icon: '🔗',
+                    category: 'web',
+                    url: item.FirstURL || '',
+                    thumbnail: item.Icon ? item.Icon.URL : ''
+                }));
+                
+                // Add main result if available
+                if (data.AbstractText) {
+                    webResults.unshift({
+                        id: 'web-main',
+                        name: data.AbstractText.substring(0, 100) + (data.AbstractText.length > 100 ? '...' : ''),
+                        icon: data.AbstractSource || '🌐',
+                        category: 'web',
+                        url: data.AbstractURL || '',
+                        isMain: true
+                    });
+                }
+                
+                this.categories.web = webResults;
+                this.renderResults();
+            }
+        } catch (e) {
+            // Fallback to basic web search link
+            this.categories.web = [{ 
+                id: 'web-search', 
+                name: `Search "${query}" on web`, 
+                icon: '🌐', 
+                category: 'web', 
+                url: `https://duckduckgo.com/?q=${encodeURIComponent(query)}` 
+            }];
+            this.renderResults();
+        }
     }
 
     fuzzySearch(items, query) {
@@ -282,15 +332,32 @@ class CommandPalette {
             
             if (items && items.length > 0) {
                 section.style.display = 'block';
-                itemsContainer.innerHTML = items.map((item, i) => `
-                    <div class="palette-item ${this.getGlobalIndex(cat, i) === this.selectedIndex ? 'selected' : ''}" 
-                         data-category="${cat}" 
-                         data-index="${i}">
-                        <span class="item-icon">${item.icon}</span>
-                        <span class="item-name">${item.name}</span>
-                        <span class="item-category">${this.getCategoryLabel(item.category)}</span>
-                    </div>
-                `).join('');
+                
+                if (cat === 'web') {
+                    // Special rendering for web results with thumbnails
+                    itemsContainer.innerHTML = items.map((item, i) => `
+                        <div class="palette-item web-result ${this.getGlobalIndex(cat, i) === this.selectedIndex ? 'selected' : ''}" 
+                             data-category="${cat}" 
+                             data-index="${i}">
+                            ${item.thumbnail ? `<img class="item-thumb" src="${item.thumbnail}" onerror="this.style.display='none'">` : `<span class="item-icon">${item.icon}</span>`}
+                            <div class="item-content">
+                                <span class="item-name">${item.name}</span>
+                                ${item.url ? `<span class="item-url">${new URL(item.url).hostname}</span>` : ''}
+                            </div>
+                            <span class="item-category">${this.getCategoryLabel(item.category)}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    itemsContainer.innerHTML = items.map((item, i) => `
+                        <div class="palette-item ${this.getGlobalIndex(cat, i) === this.selectedIndex ? 'selected' : ''}" 
+                             data-category="${cat}" 
+                             data-index="${i}">
+                            <span class="item-icon">${item.icon}</span>
+                            <span class="item-name">${item.name}</span>
+                            <span class="item-category">${this.getCategoryLabel(item.category)}</span>
+                        </div>
+                    `).join('');
+                }
                 
                 // Bind click events
                 itemsContainer.querySelectorAll('.palette-item').forEach(el => {
