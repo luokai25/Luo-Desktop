@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="styles/05-visual-effects.css">
     <link rel="stylesheet" href="styles/06-advanced-components.css">
     <link rel="stylesheet" href="styles/07-widgets.css">
+    <link rel="stylesheet" href="styles/08-portal.css">
 </head>
 <body>
     <!-- Dynamic Background -->
@@ -19,6 +20,9 @@
 
     <!-- Widgets Layer -->
     <div id="widgets-layer"></div>
+
+    <!-- Wayne Portal - AI in the OS -->
+    <div id="wayne-portal-container"></div>
 
     <!-- Desktop -->
     <div id="desktop">
@@ -41,6 +45,7 @@
     <script src="js/ai-integration.js"></script>
     <script src="js/focus-system.js"></script>
     <script src="js/developer-tools.js"></script>
+    <script src="js/wayne-portal.js"></script>
     
     <script>
         // Luo Desktop - Main Entry Point
@@ -631,6 +636,9 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             window.luoDesktop = new LuoDesktop();
+            
+            // Initialize Wayne Portal
+            document.getElementById('wayne-portal-container').innerHTML = window.waynePortal.render();
             
             // Setup browser event handling
             window.luoDesktop.setupBrowserEvents();
