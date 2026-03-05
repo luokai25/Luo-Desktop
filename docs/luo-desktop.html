@@ -1,164 +1,213 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Luo Desktop</title>
-    <style>
-/* Luo Desktop - Complete Single File Version */
+<title>Luo Desktop</title>
+<style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0a0a0f;--accent:#6366f1;--text:#fff;--text2:rgba(255,255,255,0.7);--glass:rgba(20,20,35,0.95)}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh}
-#desktop{position:relative;height:calc(100vh - 56px);padding:20px;z-index:1}
-#dynamic-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);z-index:0}
-#windows{position:fixed;top:0;left:0;width:100%;height:calc(100vh - 56px);pointer-events:none;z-index:100}
+body{font-family:system-ui;background:#0a0a0f;color:#fff;height:100vh;overflow:hidden;transition:background 0.5s}
+body.light{background:#f5f5f5;color:#333}
+#desktop{position:relative;height:calc(100vh - 60px);padding:20px;display:flex;flex-wrap:wrap;gap:12px;align-content:flex-start;width:300px}
+#taskbar{position:fixed;bottom:0;left:0;width:100%;height:60px;background:rgba(20,20,30,0.95);display:flex;align-items:center;padding:0 16px;gap:8px;border-top:1px solid #333}
+.dock-item{width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;border-radius:12px;transition:all 0.2s;background:none;border:none;color:#fff}
+.dock-item:hover{background:rgba(255,255,255,0.15);transform:scale(1.1)}
+.dock-item.active{background:rgba(99,102,241,0.3)}
+.icon{display:flex;flex-direction:column;align-items:center;gap:6px;width:80px;padding:12px;cursor:pointer;border-radius:16px;transition:all 0.2s}
+.icon:hover{background:rgba(255,255,255,0.12);transform:scale(1.05)}
+.icon span:first-child{font-size:36px}
+.icon span:last-child{font-size:12px;text-shadow:0 1px 3px rgba(0,0,0,0.8)}
+.window{position:absolute;background:rgba(20,20,35,0.98);border:1px solid #333;border-radius:16px;min-width:500px;min-height:400px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.5)}
+.window-header{display:flex;justify-content:space-between;padding:12px 16px;background:rgba(30,30,50,0.98);cursor:move;align-items:center}
+.window-title{display:flex;gap:10px;align-items:center;font-size:14px}
+.window-btns{display:flex;gap:8px}
+.win-btn{width:14px;height:14px;border-radius:50%;border:none;cursor:pointer}
+.win-btn.close{background:#f44}.win-btn.min{background:#fb4}.win-btn.max{background:#4b4}
+.window-content{flex:1;overflow:auto;padding:20px}
+#windows{position:fixed;top:0;left:0;width:100%;height:calc(100vh - 60px);pointer-events:none;z-index:100}
 #windows>*{pointer-events:auto}
-#taskbar{position:fixed;bottom:0;left:0;width:100%;height:56px;background:rgba(10,10,20,0.9);backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,0.1);z-index:200;display:flex;align-items:center;padding:0 12px;justify-content:space-between}
-.desktop-icons{display:flex;flex-direction:column;gap:16px;width:90px;flex-wrap:wrap;max-height:100%;align-content:flex-start}
-.desktop-icon{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;border-radius:12px;cursor:pointer;transition:all 0.2s}
-.desktop-icon:hover{background:rgba(255,255,255,0.1);transform:scale(1.05)}
-.desktop-icon .icon{font-size:40px}
-.desktop-icon span{font-size:11px;text-align:center;color:var(--text);text-shadow:0 1px 4px rgba(0,0,0,0.8)}
-.window{position:absolute;background:var(--glass);border:1px solid rgba(255,255,255,0.1);border-radius:12px;box-shadow:0 25px 50px rgba(0,0,0,0.6);display:flex;flex-direction:column;overflow:hidden;min-width:300px;min-height:200px}
-.window.active{box-shadow:0 0 0 1px var(--accent),0 0 30px rgba(99,102,241,0.2)}
-.window.maximized{width:calc(100vw - 20px)!important;height:calc(100vh - 76px)!important;top:10px!important;left:10px!important;border-radius:0}
-.window.minimized{display:none}
-.window-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(20,20,35,0.98);border-bottom:1px solid rgba(255,255,255,0.05);cursor:move;-webkit-app-region:drag}
-.window-title{display:flex;align-items:center;gap:10px}
-.window-title-text{font-size:13px;font-weight:500}
-.window-controls{display:flex;gap:8px;-webkit-app-region:no-drag}
-.window-btn{width:14px;height:14px;border-radius:50%;border:none;cursor:pointer}
-.window-btn.minimize{background:#fbbf24}.window-btn.maximize{background:#34d399}.window-btn.close{background:#f87171}
-.window-content{flex:1;overflow:auto;position:relative}
-/* Apps */
-.app-browser{display:flex;flex-direction:column;height:100%;background:#fff}
-.browser-toolbar{display:flex;gap:8px;padding:10px;background:#1e1e2e;align-items:center}
-.browser-btn{padding:6px 12px;background:rgba(255,255,255,0.1);border:none;border-radius:6px;color:#fff;cursor:pointer}
-.browser-url{flex:1;padding:8px 16px;background:rgba(255,255,255,0.95);border:none;border-radius:20px;color:#333;outline:none}
-.browser-content{flex:1;background:#fff}
-.browser-frame{width:100%;height:100%;border:none}
-.app-files,.app-homey,.app-settings,.app-trading,.app-terminal,.app-agent,.app-calendar{height:100%;padding:20px;overflow:auto}
-/* Taskbar */
-.taskbar-dock{display:flex;align-items:center;gap:4px;padding:4px;background:rgba(255,255,255,0.05);border-radius:16px}
-.dock-item{width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:12px;cursor:pointer;font-size:24px;transition:transform 0.2s}
-.dock-item:hover{background:rgba(255,255,255,0.1)}
-.dock-apps{display:flex;align-items:center}
-.taskbar-windows{flex:1;display:flex;align-items:center;gap:4px;padding:0 20px;overflow-x:auto}
-.taskbar-window{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,255,255,0.05);border:none;border-radius:8px;cursor:pointer;color:var(--text);font-size:13px;min-width:120px;max-width:200px}
-.taskbar-window.active{background:var(--accent)}
-.taskbar-tray{display:flex;align-items:center;gap:8px;padding:4px 8px;background:rgba(255,255,255,0.05);border-radius:12px}
-.tray-clock{display:flex;flex-direction:column;align-items:flex-end;padding:0 8px;font-size:12px;line-height:1.3}
-.clock-time{font-weight:500}
-.clock-date{font-size:10px;color:var(--text2)}
-/* Wayne Portal */
-.portal-mini{position:fixed;bottom:70px;right:20px;width:50px;height:50px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(99,102,241,0.4);z-index:999;animation:pulse 2s infinite}
-.portal-mini:hover{transform:scale(1.1)}
-.mini-avatar{font-size:24px}
-@keyframes pulse{0%,100%{box-shadow:0 4px 20px rgba(99,102,241,0.4)}50%{box-shadow:0 4px 30px rgba(99,102,241,0.6)}}
-.wayne-portal{position:fixed;bottom:70px;right:20px;width:350px;height:500px;background:var(--glass);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.5);z-index:1000;display:flex;flex-direction:column;overflow:hidden;transform:scale(0.9);opacity:0;pointer-events:none;transition:all 0.2s}
-.wayne-portal.open{transform:scale(1);opacity:1;pointer-events:auto}
-.portal-header{display:flex;align-items:center;gap:12px;padding:15px;background:rgba(99,102,241,0.2);border-bottom:1px solid rgba(255,255,255,0.1)}
-.portal-avatar{width:44px;height:44px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;display:flex;align-items:center;justify-content:center}
-.avatar-icon{font-size:24px}
-.status-dot{position:absolute;bottom:0;right:0;width:12px;height:12px;background:#666;border:2px solid var(--bg);border-radius:50%}
-.status-dot.online{background:#34d399}
-.portal-info{flex:1;display:flex;flex-direction:column}
-.portal-name{font-weight:600;font-size:16px}
-.portal-status{font-size:12px;color:var(--text2)}
-.portal-toggle{width:30px;height:30px;background:rgba(255,255,255,0.1);border:none;border-radius:8px;color:#fff;cursor:pointer}
-.portal-messages{flex:1;overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:12px}
-.message{display:flex;gap:10px;max-width:85%}
-.message.user{flex-direction:row-reverse;align-self:flex-end}
-.message .msg-icon{font-size:20px;flex-shrink:0}
-.message .msg-text{padding:10px 14px;border-radius:16px;font-size:14px}
-.message.user .msg-text{background:var(--accent);color:#fff}
-.message.assistant .msg-text{background:rgba(255,255,255,0.1)}
-.portal-input-area{display:flex;gap:10px;padding:15px;border-top:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.2)}
-.portal-input{flex:1;padding:12px 16px;background:rgba(255,255,255,0.1);border:none;border-radius:24px;color:#fff;font-size:14px;outline:none}
-.portal-send{width:44px;height:44px;background:var(--accent);border:none;border-radius:50%;color:#fff;font-size:18px;cursor:pointer}
-.portal-actions{display:flex;gap:8px;padding:10px 15px;border-top:1px solid rgba(255,255,255,0.1);flex-wrap:wrap}
-.action-btn{padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:20px;color:var(--text2);font-size:12px;cursor:pointer;white-space:nowrap}
-.action-btn:hover{background:var(--accent);color:#fff}
-/* Settings */
-.settings-sidebar{width:200px;border-right:1px solid rgba(255,255,255,0.1);padding-right:20px}
-.settings-nav{display:block;width:100%;padding:12px 16px;background:none;border:none;border-radius:8px;color:var(--text2);cursor:pointer;text-align:left;margin-bottom:4px}
-.settings-nav:hover{background:rgba(255,255,255,0.05)}
-.settings-nav.active{background:rgba(99,102,241,0.2);color:#fff}
-.setting-item{display:flex;justify-content:space-between;align-items:center;padding:15px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
-.toggle{position:relative;width:50px;height:26px;cursor:pointer}
-.toggle input{display:none}
-.toggle-slider{position:absolute;width:100%;height:100%;background:rgba(255,255,255,0.2);border-radius:13px;transition:0.3s}
-.toggle-slider::after{content:'';position:absolute;width:22px;height:22px;background:#fff;border-radius:50%;top:2px;left:2px;transition:0.3s}
-.toggle input:checked+.toggle-slider{background:var(--accent)}
-.toggle input:checked+.toggle-slider::after{transform:translateX(24px)}
-/* Terminal */
-.app-terminal{background:#0d1117;font-family:'Consolas',monospace;height:100%;display:flex;flex-direction:column}
-.terminal-output{flex:1;padding:15px;overflow:auto}
-.terminal-line{color:#c9d1d9;margin-bottom:4px}
-.terminal-input-line{display:flex;align-items:center;gap:10px;padding:15px;border-top:1px solid rgba(255,255,255,0.1)}
-.terminal-prompt{color:#7ee787}
-.terminal-input{flex:1;background:none;border:none;color:#fff;font-family:inherit;font-size:14px;outline:none}
-/* Calculator */
-.calculator{display:flex;flex-direction:column;height:100%;padding:15px}
-.calc-display{padding:20px;text-align:right;font-size:36px;font-weight:300;background:rgba(0,0,0,0.3);border-radius:12px;margin-bottom:15px;font-family:monospace}
-.calc-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;flex:1}
-.calc-btn{border:none;border-radius:12px;font-size:20px;cursor:pointer;transition:transform 0.1s}
-.calc-btn:active{transform:scale(0.95)}
-.calc-btn.num{background:rgba(255,255,255,0.1);color:#fff}
-.calc-btn.fn{background:rgba(255,255,255,0.2);color:#fff}
-.calc-btn.op{background:var(--accent);color:#fff}
-.calc-btn.eq{background:#34d399;color:#fff}
-.calc-btn.zero{grid-column:span 2}
-    </style>
+#clock{position:fixed;top:20px;right:20px;font-size:48px;font-weight:300;text-align:right;line-height:1}
+#date{font-size:14px;color:rgba(255,255,255,0.6)}
+#dashboard{position:fixed;top:20px;right:20px;background:rgba(20,20,35,0.9);padding:16px;border-radius:12px;font-size:12px;display:none}
+#dashboard.show{display:block}
+.dash-stat{display:flex;justify-content:space-between;margin-bottom:8px}
+.dash-label{color:rgba(255,255,255,0.6)}
+.dash-value{color:#8ab4f8;font-weight:500}
+</style>
 </head>
 <body>
-    <div id="dynamic-bg"></div>
-    <div id="desktop"><div class="desktop-icons" id="desktop-icons"></div></div>
-    <div id="windows"></div>
-    <div id="taskbar">
-        <div class="taskbar-dock"><button class="dock-item" data-app="start">⌂</button><div class="dock-apps" id="dock-apps"></div></div>
-        <div class="taskbar-windows" id="taskbar-windows"></div>
-        <div class="taskbar-tray"><div class="tray-clock"><span class="clock-time" id="clock">--:--</span><span class="clock-date" id="date">---</span></div></div>
-    </div>
-    <div class="portal-mini" id="portal-mini"><span class="mini-avatar">👊</span></div>
-    <div class="wayne-portal" id="wayne-portal">
-        <div class="portal-header">
-            <div class="portal-avatar"><span class="avatar-icon">👊</span><span class="status-dot online"></span></div>
-            <div class="portal-info"><span class="portal-name">Wayne</span><span class="portal-status">Online</span></div>
-            <button class="portal-toggle" id="portal-toggle">−</button>
-        </div>
-        <div class="portal-messages" id="portal-messages">
-            <div class="message assistant"><span class="msg-icon">👊</span><span class="msg-text">Hey! I'm Wayne. I'm now inside Luo Desktop. How can I help?</span></div>
-        </div>
-        <div class="portal-input-area">
-            <input type="text" class="portal-input" id="portal-input" placeholder="Talk to Wayne...">
-            <button class="portal-send" id="portal-send">➤</button>
-        </div>
-        <div class="portal-actions">
-            <button class="action-btn" data-action="homey">🏠 Homey</button>
-            <button class="action-btn" data-action="files">📁 Files</button>
-            <button class="action-btn" data-action="browser">🌐 Browser</button>
-            <button class="action-btn" data-action="search">🔍 Search</button>
-        </div>
-    </div>
+<div id="clock"><span id="time">--:--</span><div id="date">---</div></div>
+<div id="dashboard"><div class="dash-stat"><span class="dash-label">Apps Opened</span><span class="dash-value" id="stat-apps">0</span></div><div class="dash-stat"><span class="dash-label">Today</span><span class="dash-value" id="stat-today">0</span></div><div class="dash-stat"><span class="dash-label">Top App</span><span class="dash-value" id="stat-top">-</span></div></div>
+<div id="desktop"></div>
+<div id="windows"></div>
+<div id="taskbar"></div>
 <script>
-/* Luo Desktop - Complete in One File */
-const apps=[{id:'browser',name:'Browser',icon:'🌐'},{id:'files',name:'Files',icon:'📁'},{id:'terminal',name:'Terminal',icon:'⌨️'},{id:'homey',name:'Homey',icon:'🏠'},{id:'settings',name:'Settings',icon:'⚙️'},{id:'trading',name:'Trading',icon:'📈'},{id:'agent',name:'AI Agent',icon:'🤖'},{id:'notepad',name:'Notepad',icon:'📝'},{id:'calculator',name:'Calculator',icon:'🧮'},{id:'calendar',name:'Calendar',icon:'📅'},{id:'music',name:'Music',icon:'🎵'},{id:'notes',name:'Notes',icon:'📒'}];
-const windows=[];let zIndex=100,activeWindow=null;
-function init(){renderDesktopIcons();renderTaskbar();setupEvents();updateClock();setInterval(updateClock,1e3)}
-function renderDesktopIcons(){const c=document.getElementById('desktop-icons');c.innerHTML=apps.map(a=>`<div class="desktop-icon" data-app="${a.id}"><span class="icon">${a.icon}</span><span>${a.name}</span></div>`).join('');c.querySelectorAll('.desktop-icon').forEach(e=>e.addEventListener('dblclick',()=>openApp(e.dataset.app)))}
-function renderTaskbar(){const d=document.getElementById('dock-apps');d.innerHTML=apps.slice(0,6).map(a=>`<button class="dock-item" data-app="${a.id}">${a.icon}</button>`).join('');d.querySelectorAll('.dock-item').forEach(e=>e.addEventListener('click',()=>openApp(e.dataset.app)))}
-function openApp(id){const a=apps.find(x=>x.id===id);if(!a)return;const wid='win-'+Date.now(),w=document.createElement('div');w.className='window';w.id=wid;w.innerHTML=`<div class="window-header"><div class="window-title"><span>${a.icon}</span><span class="window-title-text">${a.name}</span></div><div class="window-controls"><button class="window-btn minimize"></button><button class="window-btn maximize"></button><button class="window-btn close"></button></div></div><div class="window-content" id="content-${wid}"></div>`;w.style.cssText=`left:${100+windows.length*30}px;top:${50+windows.length*30}px;width:700px;height:500px;z-index:${++zIndex}`;document.getElementById('windows').appendChild(w);windows.push({id:wid,appId:id,el:w});setupWindowEvents(w);renderAppContent(id,wid);focusWindow(wid)}
-function renderAppContent(appId,wid){const c=document.getElementById('content-'+wid);if(appId==='browser')c.innerHTML=`<div class="app-browser"><div class="browser-toolbar"><button class="browser-btn">←</button><button class="browser-btn">→</button><button class="browser-btn">↻</button><input type="text" class="browser-url" placeholder="Search or enter URL..." value="luosearch.html"><button class="browser-btn">🏠</button></div><div class="browser-content"><iframe class="browser-frame" src="luosearch.html"></iframe></div></div>`;else if(appId==='terminal')c.innerHTML=`<div class="app-terminal"><div class="terminal-output"><div class="terminal-line">Luo Desktop Terminal v1.0.0</div><div class="terminal-line">Type 'help' for commands</div></div><div class="terminal-input-line"><span class="terminal-prompt">luo@desktop:~$</span><input type="text" class="terminal-input"></div></div>`;else if(appId==='settings')c.innerHTML=`<div style="display:flex;height:100%"><div class="settings-sidebar"><button class="settings-nav active">🎨 Appearance</button><button class="settings-nav">🖥️ Display</button><button class="settings-nav">🔊 Sound</button><button class="settings-nav">🌐 Network</button></div><div style="flex:1;padding:20px"><h2>Appearance</h2><div class="setting-item"><span>Dark Mode</span><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div><div class="setting-item"><span>Animations</span><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div></div></div>`;else if(appId==='calculator')c.innerHTML=`<div class="calculator"><div class="calc-display">0</div><div class="calc-buttons"><button class="calc-btn fn">C</button><button class="calc-btn fn">±</button><button class="calc-btn fn">%</button><button class="calc-btn op">÷</button><button class="calc-btn num">7</button><button class="calc-btn num">8</button><button class="calc-btn num">9</button><button class="calc-btn op">×</button><button class="calc-btn num">4</button><button class="calc-btn num">5</button><button class="calc-btn num">6</button><button class="calc-btn op">-</button><button class="calc-btn num">1</button><button class="calc-btn num">2</button><button class="calc-btn num">3</button><button class="calc-btn op">+</button><button class="calc-btn num zero">0</button><button class="calc-btn num">.</button><button class="calc-btn eq">=</button></div></div>`;else c.innerHTML='<div style="padding:20px"><h2>'+apps.find(x=>x.id===appId).name+'</h2><p>App content coming soon!</p></div>'}
-function setupWindowEvents(w){w.querySelectorAll('.window-btn').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const a=b.classList.contains('minimize')?'minimize':b.classList.contains('maximize')?'maximize':'close';if(a==='close'){w.remove();windows.splice(windows.findIndex(x=>x.el===w),1)}else if(a==='minimize')w.classList.add('minimized');else w.classList.toggle('maximized')}));let drag=false,dx=0,dy=0;w.querySelector('.window-header').addEventListener('mousedown',e=>{if(e.target.classList.contains('window-btn'))return;drag=true;dx=e.clientX-w.offsetLeft;dy=e.clientY-w.offsetTop});document.addEventListener('mousemove',e=>{if(!drag)return;w.style.left=e.clientX-dx+'px';w.style.top=e.clientY-dy+'px'});document.addEventListener('mouseup',()=>drag=false);w.addEventListener('mousedown',()=>focusWindow(w.id))}
-function focusWindow(id){const w=document.getElementById(id);w.style.zIndex=++zIndex;windows.forEach(x=>x.el.classList.toggle('active',x.id===id));activeWindow=id}
-function setupEvents(){document.getElementById('portal-mini').addEventListener('click',()=>togglePortal());document.getElementById('portal-toggle').addEventListener('click',()=>togglePortal());document.getElementById('portal-send').addEventListener('click',sendMessage);document.getElementById('portal-input').addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage()})}
-function togglePortal(){const p=document.getElementById('wayne-portal'),m=document.getElementById('portal-mini');if(p.classList.contains('open')){p.classList.remove('open');m.style.display='flex'}else{p.classList.add('open');m.style.display='none';document.getElementById('portal-input').focus()}}
-function sendMessage(){const i=document.getElementById('portal-input'),t=i.value.trim();if(!t)return;addMessage(t,'user');i.value='';setTimeout(()=>addMessage(generateResponse(t),'assistant'),500+Math.random()*1e3)}
-function addMessage(text,type){const m=document.getElementById('portal-messages'),d=document.createElement('div');d.className='message '+type;d.innerHTML=type==='user'?`<span class="msg-text">${text}</span>`:`<span class="msg-icon">👊</span><span class="msg-text">${text}</span>`;m.appendChild(d);m.scrollTop=m.scrollHeight}
-function generateResponse(m){m=m.toLowerCase();if(m.includes('homey')||m.includes('light'))return"🏠 I can see your Homey devices! You've got 1,708 devices.";if(m.includes('file')||m.includes('folder'))return"📁 Want me to open the Files app?";if(m.includes('search'))return"🔍 Let's search! What do you want to find?";if(m.includes('hello')||m.includes('hi'))return"👊 Hey! Good to be here inside Luo Desktop!";if(m.includes('help'))return"🤖 I'm Wayne! I can help with Homey, files, search, and more!";return"👊 I hear you! I'm here to help. What do you need?"}
-function updateClock(){const n=new Date,d=document.getElementById('clock'),t=document.getElementById('date');d.textContent=n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});t.textContent=n.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}
-document.addEventListener('DOMContentLoaded',init);
+// Self-Learning Luo Desktop
+class LuoDesktop{
+  constructor(){
+    this.apps=[
+      {id:'browser',icon:'🌐',name:'Browser'},
+      {id:'files',icon:'📁',name:'Files'},
+      {id:'terminal',icon:'⌨️',name:'Terminal'},
+      {id:'settings',icon:'⚙️',name:'Settings'},
+      {id:'calc',icon:'🧮',name:'Calculator'},
+      {id:'notes',icon:'📝',name:'Notes'},
+      {id:'music',icon:'🎵',name:'Music'},
+      {id:'video',icon:'🎬',name:'Video'},
+      {id:'camera',icon:'📷',name:'Camera'},
+      {id:'calendar',icon:'📅',name:'Calendar'},
+      {id:'mail',icon:'📧',name:'Mail'},
+      {id:'chat',icon:'💬',name:'Chat'},
+      {id:'store',icon:'🛒',name:'Store'},
+      {id:'weather',icon:'🌤️',name:'Weather'},
+      {id:'ai',icon:'🤖',name:'AI Assistant'},
+    ];
+    
+    // Learning data
+    this.learned=JSON.parse(localStorage.getItem('luo-learned')||'{}');
+    this.history=JSON.parse(localStorage.getItem('luo-history')||'[]');
+    this.todayUsage=JSON.parse(localStorage.getItem('luo-today')||'[]');
+    this.windowLayouts=JSON.parse(localStorage.getItem('luo-layouts')||'{}');
+    
+    this.z=1;
+    this.init();
+  }
+  
+  init(){
+    this.updateClock();
+    this.sortAppsByUsage();
+    this.render();
+    this.checkTimeBased();
+    setInterval(()=>this.updateClock(),1000);
+    setInterval(()=>this.saveData(),10000);
+  }
+  
+  // Learn: Track app usage
+  learn(appId){
+    const now=Date.now();
+    const hour=new Date().getHours();
+    
+    // Count by app
+    this.learned[appId]=this.learned[appId]||{count:0,lastUsed:0,hours:{}};
+    this.learned[appId].count++;
+    this.learned[appId].lastUsed=now;
+    this.learned[appId].hours[hour]=(this.learned[appId].hours[hour]||0)+1;
+    
+    // Today's usage
+    const today=new Date().toDateString();
+    this.todayUsage=this.todayUsage.filter(h=>new Date(h.time).toDateString()===today);
+    this.todayUsage.push({appId,time:now});
+    
+    // Update stats
+    this.updateStats();
+  }
+  
+  sortAppsByUsage(){
+    // Sort apps by usage count (most used first)
+    this.apps.sort((a,b)=>{
+      const aCount=this.learned[a.id]?.count||0;
+      const bCount=this.learned[b.id]?.count||0;
+      return bCount-aCount;
+    });
+  }
+  
+  getTopApp(){
+    let top=null,max=0;
+    for(const[id,data]of Object.entries(this.learned)){
+      if(data.count>max){max=data.count;top=id;}
+    }
+    return this.apps.find(a=>a.id===top)?.name||'-';
+  }
+  
+  getTimeBasedSuggestion(){
+    const hour=new Date().getHours();
+    let best=null,max=0;
+    for(const[id,data]of Object.entries(this.learned)){
+      const hourCount=data.hours[hour]||0;
+      if(hourCount>max){max=hourCount;best=id;}
+    }
+    return best;
+  }
+  
+  checkTimeBased(){
+    const hour=new Date().getHours();
+    // Morning (6-12): Show weather, calendar
+    // Day (12-18): Show work apps
+    // Evening (18-24): Show entertainment
+    // Night (0-6): Show minimal
+    const theme=hour>=6&&hour<12?'morning':hour>=12&&hour<18?'day':hour>=18&&hour<24?'evening':'night';
+    document.body.className=theme==='day'?'light':'';
+  }
+  
+  updateClock(){
+    const now=new Date();
+    document.getElementById('time').textContent=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('date').textContent=now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  }
+  
+  updateStats(){
+    const today=new Date().toDateString();
+    const todayCount=this.todayUsage.filter(h=>new Date(h.time).toDateString()===today).length;
+    const total=Object.values(this.learned).reduce((sum,a)=>sum+(a.count||0),0);
+    
+    document.getElementById('stat-apps').textContent=total;
+    document.getElementById('stat-today').textContent=todayCount;
+    document.getElementById('stat-top').textContent=this.getTopApp();
+  }
+  
+  saveData(){
+    localStorage.setItem('luo-learned',JSON.stringify(this.learned));
+    localStorage.setItem('luo-today',JSON.stringify(this.todayUsage));
+  }
+  
+  render(){
+    // Render desktop icons sorted by usage
+    const desktop=document.getElementById('desktop');
+    desktop.innerHTML=this.apps.map(a=>{
+      const usage=this.learned[a.id]?.count||0;
+      return '<div class="icon" onclick="desktop.openApp(\''+a.id+'\')" data-app="'+a.id+'"><span>'+a.icon+'</span><span>'+a.name+(usage>0?' ('+usage+')':'')+'</span></div>';
+    }).join('');
+    
+    // Render taskbar (top 8)
+    const taskbar=document.getElementById('taskbar');
+    taskbar.innerHTML=this.apps.slice(0,8).map(a=>'<button class="dock-item" onclick="desktop.openApp(\''+a.id+'\')">'+a.icon+'</button>').join('');
+  }
+  
+  openApp(id){
+    this.learn(id);
+    
+    const app=this.apps.find(a=>a.id===id);
+    if(!app)app={name:id,icon:'📄'};
+    
+    const win=document.createElement('div');
+    win.className='window';
+    win.style.cssText='left:'+(80+this.z*20)+'px;top:'+(40+this.z*20)+'px;width:600px;height:450px;z-index:'+(++this.z);
+    win.innerHTML='<div class="window-header"><div class="window-title"><span>'+app.icon+'</span><span>'+app.name+'</span></div><div class="window-btns"><button class="win-btn min"></button><button class="win-btn max"></button><button class="win-btn close" onclick="this.closest(\'.window\').remove()"></button></div></div><div class="window-content" id="win-'+id+'"></div>';
+    document.getElementById('windows').appendChild(win);
+    
+    this.loadAppContent(id);
+    this.render(); // Re-render to update usage counts
+  }
+  
+  loadAppContent(id){
+    const c=document.getElementById('win-'+id);
+    if(id==='browser'){
+      c.innerHTML='<iframe src="browser.html" style="width:100%;height:100%;border:none">';
+    }else if(id==='weather'){
+      const temp=Math.round(15+Math.random()*15);
+      c.innerHTML='<div style="text-align:center;padding:60px"><span style="font-size:80px">🌤️</span><h2 style="font-size:48px;margin:20px 0">'+temp+'°C</h2><p style="color:rgba(255,255,255,0.6)">Based on your location</p></div>';
+    }else if(id==='calendar'){
+      const now=new Date();
+      c.innerHTML='<div style="padding:20px"><h2>📅 '+now.toLocaleDateString('en-US',{month:'long',year:'numeric'})+'</h2><p style="color:rgba(255,255,255,0.6)">Your schedule loads here</p></div>';
+    }else if(id==='music'){
+      c.innerHTML='<div style="padding:40px;text-align:center"><span style="font-size:80px">🎵</span><h2>Your Music</h2><p style="color:rgba(255,255,255,0.6)">Play your favorite tunes</p><button style="margin-top:20px;padding:12px 24px;background:#8ab4f8;border:none;border-radius:20px;cursor:pointer">▶️ Play</button></div>';
+    }else if(id==='ai'){
+      c.innerHTML='<div style="padding:20px"><h2>🤖 AI Assistant</h2><p style="color:rgba(255,255,255,0.6)">Your smart helper</p><input type="text" placeholder="Ask me anything..." style="width:100%;padding:12px;background:rgba(255,255,255,0.1);border:1px solid #333;border-radius:8px;color:#fff;margin-top:20px"></div>';
+    }else{
+      c.innerHTML='<div style="padding:40px;text-align:center"><span style="font-size:60px">'+app.icon+'</span><h2>'+app.name+'</h2><p style="color:rgba(255,255,255,0.6)">App loaded - learning your preferences</p></div>';
+    }
+  }
+}
+
+var desktop=new LuoDesktop();
 </script>
 </body>
 </html>

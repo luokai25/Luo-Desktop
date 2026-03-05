@@ -4,62 +4,210 @@
 <title>Luo Desktop</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:system-ui;background:#0a0a0f;color:#fff;height:100vh;overflow:hidden}
-#desktop{position:relative;height:calc(100vh - 50px);padding:20px;display:flex;flex-wrap:wrap;gap:10px;align-content:flex-start;width:250px}
-#taskbar{position:fixed;bottom:0;left:0;width:100%;height:50px;background:rgba(20,20,30,0.95);display:flex;align-items:center;padding:0 10px;gap:5px;border-top:1px solid #333}
-.dock-item{width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;border-radius:10px;transition:0.2s;background:none;border:none;color:#fff}
-.dock-item:hover{background:rgba(255,255,255,0.2)}
-.icon{display:flex;flex-direction:column;align-items:center;gap:4px;width:70px;padding:10px;cursor:pointer;border-radius:12px}
-.icon:hover{background:rgba(255,255,255,0.15)}
-.icon span:first-child{font-size:32px}
-.icon span:last-child{font-size:11px;text-shadow:0 1px 2px #000}
-.window{position:absolute;background:rgba(20,20,35,0.98);border:1px solid #333;border-radius:12px;min-width:400px;min-height:300px;display:flex;flex-direction:column;overflow:hidden}
-.window-header{display:flex;justify-content:space-between;padding:10px;background:rgba(30,30,45,0.98);cursor:move}
-.window-title{display:flex;gap:8px;align-items:center;font-size:13px}
-.window-btns{display:flex;gap:6px}
-.win-btn{width:12px;height:12px;border-radius:50%;border:none;cursor:pointer}
+body{font-family:system-ui;background:#0a0a0f;color:#fff;height:100vh;overflow:hidden;transition:background 0.5s}
+body.light{background:#f5f5f5;color:#333}
+#desktop{position:relative;height:calc(100vh - 60px);padding:20px;display:flex;flex-wrap:wrap;gap:12px;align-content:flex-start;width:300px}
+#taskbar{position:fixed;bottom:0;left:0;width:100%;height:60px;background:rgba(20,20,30,0.95);display:flex;align-items:center;padding:0 16px;gap:8px;border-top:1px solid #333}
+.dock-item{width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;border-radius:12px;transition:all 0.2s;background:none;border:none;color:#fff}
+.dock-item:hover{background:rgba(255,255,255,0.15);transform:scale(1.1)}
+.dock-item.active{background:rgba(99,102,241,0.3)}
+.icon{display:flex;flex-direction:column;align-items:center;gap:6px;width:80px;padding:12px;cursor:pointer;border-radius:16px;transition:all 0.2s}
+.icon:hover{background:rgba(255,255,255,0.12);transform:scale(1.05)}
+.icon span:first-child{font-size:36px}
+.icon span:last-child{font-size:12px;text-shadow:0 1px 3px rgba(0,0,0,0.8)}
+.window{position:absolute;background:rgba(20,20,35,0.98);border:1px solid #333;border-radius:16px;min-width:500px;min-height:400px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.5)}
+.window-header{display:flex;justify-content:space-between;padding:12px 16px;background:rgba(30,30,50,0.98);cursor:move;align-items:center}
+.window-title{display:flex;gap:10px;align-items:center;font-size:14px}
+.window-btns{display:flex;gap:8px}
+.win-btn{width:14px;height:14px;border-radius:50%;border:none;cursor:pointer}
 .win-btn.close{background:#f44}.win-btn.min{background:#fb4}.win-btn.max{background:#4b4}
-.window-content{flex:1;overflow:hidden}
-.window-content iframe{width:100%;height:100%;border:none}
-#windows{position:fixed;top:0;left:0;width:100%;height:calc(100vh - 50px);pointer-events:none;z-index:100}
+.window-content{flex:1;overflow:auto;padding:20px}
+#windows{position:fixed;top:0;left:0;width:100%;height:calc(100vh - 60px);pointer-events:none;z-index:100}
 #windows>*{pointer-events:auto}
+#clock{position:fixed;top:20px;right:20px;font-size:48px;font-weight:300;text-align:right;line-height:1}
+#date{font-size:14px;color:rgba(255,255,255,0.6)}
+#dashboard{position:fixed;top:20px;right:20px;background:rgba(20,20,35,0.9);padding:16px;border-radius:12px;font-size:12px;display:none}
+#dashboard.show{display:block}
+.dash-stat{display:flex;justify-content:space-between;margin-bottom:8px}
+.dash-label{color:rgba(255,255,255,0.6)}
+.dash-value{color:#8ab4f8;font-weight:500}
 </style>
 </head>
 <body>
+<div id="clock"><span id="time">--:--</span><div id="date">---</div></div>
+<div id="dashboard"><div class="dash-stat"><span class="dash-label">Apps Opened</span><span class="dash-value" id="stat-apps">0</span></div><div class="dash-stat"><span class="dash-label">Today</span><span class="dash-value" id="stat-today">0</span></div><div class="dash-stat"><span class="dash-label">Top App</span><span class="dash-value" id="stat-top">-</span></div></div>
 <div id="desktop"></div>
 <div id="windows"></div>
 <div id="taskbar"></div>
 <script>
-var apps=[
-  {id:'browser',icon:'🌐',name:'Browser'},
-  {id:'files',icon:'📁',name:'Files'},
-  {id:'terminal',icon:'⌨️',name:'Terminal'},
-  {id:'settings',icon:'⚙️',name:'Settings'},
-  {id:'calc',icon:'🧮',name:'Calculator'}
-];
-var z=1;
-function init(){
-  document.getElementById('desktop').innerHTML=apps.map(a=>'<div class="icon" onclick="openApp(\''+a.id+'\')"><span>'+a.icon+'</span><span>'+a.name+'</span></div>').join('');
-  document.getElementById('taskbar').innerHTML=apps.map(a=>'<button class="dock-item" onclick="openApp(\''+a.id+'\')">'+a.icon+'</button>').join('');
+// Self-Learning Luo Desktop
+class LuoDesktop{
+  constructor(){
+    this.apps=[
+      {id:'browser',icon:'🌐',name:'Browser'},
+      {id:'files',icon:'📁',name:'Files'},
+      {id:'terminal',icon:'⌨️',name:'Terminal'},
+      {id:'settings',icon:'⚙️',name:'Settings'},
+      {id:'calc',icon:'🧮',name:'Calculator'},
+      {id:'notes',icon:'📝',name:'Notes'},
+      {id:'music',icon:'🎵',name:'Music'},
+      {id:'video',icon:'🎬',name:'Video'},
+      {id:'camera',icon:'📷',name:'Camera'},
+      {id:'calendar',icon:'📅',name:'Calendar'},
+      {id:'mail',icon:'📧',name:'Mail'},
+      {id:'chat',icon:'💬',name:'Chat'},
+      {id:'store',icon:'🛒',name:'Store'},
+      {id:'weather',icon:'🌤️',name:'Weather'},
+      {id:'ai',icon:'🤖',name:'AI Assistant'},
+    ];
+    
+    // Learning data
+    this.learned=JSON.parse(localStorage.getItem('luo-learned')||'{}');
+    this.history=JSON.parse(localStorage.getItem('luo-history')||'[]');
+    this.todayUsage=JSON.parse(localStorage.getItem('luo-today')||'[]');
+    this.windowLayouts=JSON.parse(localStorage.getItem('luo-layouts')||'{}');
+    
+    this.z=1;
+    this.init();
+  }
+  
+  init(){
+    this.updateClock();
+    this.sortAppsByUsage();
+    this.render();
+    this.checkTimeBased();
+    setInterval(()=>this.updateClock(),1000);
+    setInterval(()=>this.saveData(),10000);
+  }
+  
+  // Learn: Track app usage
+  learn(appId){
+    const now=Date.now();
+    const hour=new Date().getHours();
+    
+    // Count by app
+    this.learned[appId]=this.learned[appId]||{count:0,lastUsed:0,hours:{}};
+    this.learned[appId].count++;
+    this.learned[appId].lastUsed=now;
+    this.learned[appId].hours[hour]=(this.learned[appId].hours[hour]||0)+1;
+    
+    // Today's usage
+    const today=new Date().toDateString();
+    this.todayUsage=this.todayUsage.filter(h=>new Date(h.time).toDateString()===today);
+    this.todayUsage.push({appId,time:now});
+    
+    // Update stats
+    this.updateStats();
+  }
+  
+  sortAppsByUsage(){
+    // Sort apps by usage count (most used first)
+    this.apps.sort((a,b)=>{
+      const aCount=this.learned[a.id]?.count||0;
+      const bCount=this.learned[b.id]?.count||0;
+      return bCount-aCount;
+    });
+  }
+  
+  getTopApp(){
+    let top=null,max=0;
+    for(const[id,data]of Object.entries(this.learned)){
+      if(data.count>max){max=data.count;top=id;}
+    }
+    return this.apps.find(a=>a.id===top)?.name||'-';
+  }
+  
+  getTimeBasedSuggestion(){
+    const hour=new Date().getHours();
+    let best=null,max=0;
+    for(const[id,data]of Object.entries(this.learned)){
+      const hourCount=data.hours[hour]||0;
+      if(hourCount>max){max=hourCount;best=id;}
+    }
+    return best;
+  }
+  
+  checkTimeBased(){
+    const hour=new Date().getHours();
+    // Morning (6-12): Show weather, calendar
+    // Day (12-18): Show work apps
+    // Evening (18-24): Show entertainment
+    // Night (0-6): Show minimal
+    const theme=hour>=6&&hour<12?'morning':hour>=12&&hour<18?'day':hour>=18&&hour<24?'evening':'night';
+    document.body.className=theme==='day'?'light':'';
+  }
+  
+  updateClock(){
+    const now=new Date();
+    document.getElementById('time').textContent=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('date').textContent=now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  }
+  
+  updateStats(){
+    const today=new Date().toDateString();
+    const todayCount=this.todayUsage.filter(h=>new Date(h.time).toDateString()===today).length;
+    const total=Object.values(this.learned).reduce((sum,a)=>sum+(a.count||0),0);
+    
+    document.getElementById('stat-apps').textContent=total;
+    document.getElementById('stat-today').textContent=todayCount;
+    document.getElementById('stat-top').textContent=this.getTopApp();
+  }
+  
+  saveData(){
+    localStorage.setItem('luo-learned',JSON.stringify(this.learned));
+    localStorage.setItem('luo-today',JSON.stringify(this.todayUsage));
+  }
+  
+  render(){
+    // Render desktop icons sorted by usage
+    const desktop=document.getElementById('desktop');
+    desktop.innerHTML=this.apps.map(a=>{
+      const usage=this.learned[a.id]?.count||0;
+      return '<div class="icon" onclick="desktop.openApp(\''+a.id+'\')" data-app="'+a.id+'"><span>'+a.icon+'</span><span>'+a.name+(usage>0?' ('+usage+')':'')+'</span></div>';
+    }).join('');
+    
+    // Render taskbar (top 8)
+    const taskbar=document.getElementById('taskbar');
+    taskbar.innerHTML=this.apps.slice(0,8).map(a=>'<button class="dock-item" onclick="desktop.openApp(\''+a.id+'\')">'+a.icon+'</button>').join('');
+  }
+  
+  openApp(id){
+    this.learn(id);
+    
+    const app=this.apps.find(a=>a.id===id);
+    if(!app)app={name:id,icon:'📄'};
+    
+    const win=document.createElement('div');
+    win.className='window';
+    win.style.cssText='left:'+(80+this.z*20)+'px;top:'+(40+this.z*20)+'px;width:600px;height:450px;z-index:'+(++this.z);
+    win.innerHTML='<div class="window-header"><div class="window-title"><span>'+app.icon+'</span><span>'+app.name+'</span></div><div class="window-btns"><button class="win-btn min"></button><button class="win-btn max"></button><button class="win-btn close" onclick="this.closest(\'.window\').remove()"></button></div></div><div class="window-content" id="win-'+id+'"></div>';
+    document.getElementById('windows').appendChild(win);
+    
+    this.loadAppContent(id);
+    this.render(); // Re-render to update usage counts
+  }
+  
+  loadAppContent(id){
+    const c=document.getElementById('win-'+id);
+    if(id==='browser'){
+      c.innerHTML='<iframe src="browser.html" style="width:100%;height:100%;border:none">';
+    }else if(id==='weather'){
+      const temp=Math.round(15+Math.random()*15);
+      c.innerHTML='<div style="text-align:center;padding:60px"><span style="font-size:80px">🌤️</span><h2 style="font-size:48px;margin:20px 0">'+temp+'°C</h2><p style="color:rgba(255,255,255,0.6)">Based on your location</p></div>';
+    }else if(id==='calendar'){
+      const now=new Date();
+      c.innerHTML='<div style="padding:20px"><h2>📅 '+now.toLocaleDateString('en-US',{month:'long',year:'numeric'})+'</h2><p style="color:rgba(255,255,255,0.6)">Your schedule loads here</p></div>';
+    }else if(id==='music'){
+      c.innerHTML='<div style="padding:40px;text-align:center"><span style="font-size:80px">🎵</span><h2>Your Music</h2><p style="color:rgba(255,255,255,0.6)">Play your favorite tunes</p><button style="margin-top:20px;padding:12px 24px;background:#8ab4f8;border:none;border-radius:20px;cursor:pointer">▶️ Play</button></div>';
+    }else if(id==='ai'){
+      c.innerHTML='<div style="padding:20px"><h2>🤖 AI Assistant</h2><p style="color:rgba(255,255,255,0.6)">Your smart helper</p><input type="text" placeholder="Ask me anything..." style="width:100%;padding:12px;background:rgba(255,255,255,0.1);border:1px solid #333;border-radius:8px;color:#fff;margin-top:20px"></div>';
+    }else{
+      c.innerHTML='<div style="padding:40px;text-align:center"><span style="font-size:60px">'+app.icon+'</span><h2>'+app.name+'</h2><p style="color:rgba(255,255,255,0.6)">App loaded - learning your preferences</p></div>';
+    }
+  }
 }
-function openApp(id){
-  var app=apps.find(function(a){return a.id===id});
-  if(!app)app={name:id,icon:'📄'};
-  var win=document.createElement('div');
-  win.className='window';
-  win.style.cssText='left:80px;top:40px;width:800px;height:500px;z-index:'+(++z);
-  win.innerHTML='<div class="window-header"><div class="window-title"><span>'+(app.icon||'📄')+'</span><span>'+app.name+'</span></div><div class="window-btns"><button class="win-btn min"></button><button class="win-btn max"></button><button class="win-btn close" onclick="this.parentElement.parentElement.parentElement.remove()"></button></div></div><div class="window-content" id="win-'+id+'"></div>';
-  document.getElementById('windows').appendChild(win);
-  loadApp(id);
-}
-function loadApp(id){
-  var c=document.getElementById('win-'+id);
-  if(id==='browser')c.innerHTML='<iframe src="browser.html"></iframe>';
-  else if(id==='calc')c.innerHTML='<div style="padding:20px"><h2>Calculator</h2><p>Coming soon!</p></div>';
-  else if(id==='terminal')c.innerHTML='<pre style="color:#0f0;padding:10px">Luo Terminal v1.0\n$ _</pre>';
-  else c.innerHTML='<div style="padding:20px"><h2>'+apps.find(function(a){return a.id===id}).name+'</h2><p>App content</p></div>';
-}
-init();
+
+var desktop=new LuoDesktop();
 </script>
 </body>
 </html>
